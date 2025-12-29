@@ -12,16 +12,6 @@ Aplikasi dikembangkan untuk mensimulasikan proses optimasi pemuatan barang, di m
 
 ---
 
-### 👤 Identitas Penyusun
-
-* **Raditya Kemal Thooriq** (103012430039)
-
-Program Studi S1 Informatika
-**Fakultas Informatika**
-Universitas Telkom, 2025
-
----
-
 ### 🎯 Tujuan
 
 1. Mengimplementasikan algoritma rekursif dan algoritma iteratif (*Dynamic Programming*) untuk menyelesaikan 0/1 Knapsack Problem.
