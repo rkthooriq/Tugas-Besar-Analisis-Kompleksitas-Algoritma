@@ -86,11 +86,11 @@
                 <div class="config-panel">
                     <div class="input-wrapper">
                         <label>Mulai N:</label>
-                        <input type="number" id="startN" value="10">
+                        <input type="number" id="startN" value="100" min="100">
                     </div>
                     <div class="input-wrapper">
                         <label>Sampai N:</label>
-                        <input type="number" id="endN" value="40">
+                        <input type="number" id="endN" value="1000" max="1000">
                     </div>
                     <div class="input-wrapper">
                         <label>Kapasitas (W):</label>
@@ -221,71 +221,7 @@
 
         // --- LOGIKA SIMULASI (BENCHMARK) ---
 
-        const TIME_PER_OP = 0.000004; // Konstanta kecepatan
-
-        function formatTime(ms) {
-            if (ms < 1) return ms.toFixed(4) + " ms";
-            if (ms < 1000) return ms.toFixed(2) + " ms";
-            let sec = ms/1000;
-            if(sec < 60) return sec.toFixed(2) + " Detik";
-            let min = sec/60;
-            if(min < 60) return min.toFixed(2) + " Menit";
-            let hour = min/60;
-            if(hour < 24) return hour.toFixed(2) + " Jam";
-            return (hour/24).toFixed(2) + " Hari";
-        }
-
-        let chart = null;
-
-        async function runBenchmarkSimulation() {
-            const startN = parseInt(document.getElementById('startN').value);
-            const endN = parseInt(document.getElementById('endN').value);
-            const W = parseInt(document.getElementById('simCapacity').value);
-            const table = document.getElementById('comparisonBody');
-            
-            if(startN > endN) { alert("N Awal tidak boleh lebih besar dari N Akhir"); return; }
-            
-            document.getElementById('loading').classList.add('active');
-            table.innerHTML = '';
-            let labels = [], dataRec = [], dataIter = [];
-
-            for(let n = startN; n <= endN; n++) {
-                // Rumus
-                let timeRec = Math.pow(2, n) * TIME_PER_OP;
-                let timeIter = (n * W) * TIME_PER_OP;
-
-                labels.push(n);
-                dataRec.push(timeRec);
-                dataIter.push(timeIter);
-
-                table.innerHTML += `
-                    <tr>
-                        <td>${n}</td>
-                        <td style="color: #ff6384; font-weight:bold;">${formatTime(timeRec)}</td>
-                        <td style="color: #36a2eb; font-weight:bold;">${formatTime(timeIter)}</td>
-                        <td>${timeRec > timeIter ? 'Iteratif Menang' : 'Seimbang'}</td>
-                    </tr>
-                `;
-                
-                if(n % 2 === 0) await new Promise(r => setTimeout(r, 10)); // Animasi
-            }
-
-            document.getElementById('loading').classList.remove('active');
-            updateChart(labels, dataRec, dataIter);
-            
-            // Analisis Text
-            const lastRec = dataRec[dataRec.length-1];
-            const lastIter = dataIter[dataIter.length-1];
-            document.getElementById('analysisText').innerHTML = `
-                <div style="background: #e7f3ff; padding: 20px; border-radius: 10px; border-left: 5px solid #36a2eb;">
-                    <strong>Kesimpulan Analisis:</strong><br>
-                    Pada jumlah barang N=${endN}, algoritma Rekursif membutuhkan waktu estimasi <strong>${formatTime(lastRec)}</strong>, 
-                    sedangkan Iteratif hanya butuh <strong>${formatTime(lastIter)}</strong>. 
-                    Ini membuktikan Iteratif (Dynamic Programming) jauh lebih efisien untuk skala besar.
-                </div>
-            `;
-        }
-
+        
         function updateChart(labels, rec, iter) {
             const ctx = document.getElementById('timeChart').getContext('2d');
             if(chart) chart.destroy();
@@ -312,4 +248,110 @@
         window.onload = generateItems;
     </script>
 </body>
-</html>
+</html><script>
+const TIME_PER_OP = 0.000001; // konstanta simulasi (ms)
+let chart = null;
+
+function formatTime(ms) {
+    if (ms < 1) return ms.toFixed(6) + " ms";
+    if (ms < 1000) return ms.toFixed(2) + " ms";
+    let sec = ms / 1000;
+    if (sec < 60) return sec.toFixed(2) + " detik";
+    let min = sec / 60;
+    return min.toFixed(2) + " menit";
+}
+
+async function runBenchmarkSimulation() {
+    const startN = parseInt(document.getElementById('startN').value);
+    const endN = parseInt(document.getElementById('endN').value);
+    const W = parseInt(document.getElementById('simCapacity').value);
+    const table = document.getElementById('comparisonBody');
+
+    if (startN >= endN) {
+        alert("Rentang N tidak valid");
+        return;
+    }
+
+    document.getElementById('loading').classList.add('active');
+    table.innerHTML = "";
+
+    let labels = [];
+    let dataRec = [];
+    let dataIter = [];
+
+    // step adaptif biar 1–10000 tetap ringan
+    let step = endN > 1000 ? 100 : 1;
+
+    for (let n = startN; n <= endN; n += step) {
+
+        let timeRec = Math.pow(2, n / 5) * TIME_PER_OP;
+        // Iteratif O(n × W)
+        let timeIter = n * W * TIME_PER_OP;
+
+        labels.push(n);
+        dataRec.push(timeRec);
+        dataIter.push(timeIter);
+
+        table.innerHTML += `
+        <tr>
+            <td>${n}</td>
+            <td style="color:#ff6384;font-weight:bold">${formatTime(timeRec)}</td>
+            <td style="color:#36a2eb;font-weight:bold">${formatTime(timeIter)}</td>
+            <td>${timeRec > timeIter ? "Iteratif Lebih Efisien" : "Seimbang"}</td>
+        </tr>
+        `;
+
+        if (n % 500 === 0) await new Promise(r => setTimeout(r, 10));
+    }
+
+    document.getElementById('loading').classList.remove('active');
+    updateChart(labels, dataRec, dataIter);
+
+    document.getElementById('analysisText').innerHTML = `
+    <div style="background:#e7f3ff;padding:20px;border-radius:10px;border-left:5px solid #36a2eb">
+        <strong>Analisis:</strong><br>
+        Grafik menunjukkan bahwa algoritma rekursif memiliki pertumbuhan waktu eksponensial,
+        sedangkan algoritma iteratif meningkat secara linear.
+        Pada N besar (≥1000), algoritma rekursif menjadi tidak efisien dan tidak layak digunakan.
+    </div>`;
+}
+
+function updateChart(labels, rec, iter) {
+    const ctx = document.getElementById('timeChart').getContext('2d');
+    if (chart) chart.destroy();
+
+    chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Rekursif (O(2ⁿ) – Estimasi)',
+                    data: rec,
+                    borderColor: '#ff6384',
+                    tension: 0.3
+                },
+                {
+                    label: 'Iteratif (O(n×W))',
+                    data: iter,
+                    borderColor: '#36a2eb',
+                    tension: 0.3
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    type: 'logarithmic',
+                    title: { display: true, text: 'Waktu Eksekusi (Log Scale)' }
+                },
+                x: {
+                    title: { display: true, text: 'Jumlah Barang (n)' }
+                }
+            }
+        }
+    });
+}
+</script>
